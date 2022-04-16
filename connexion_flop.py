@@ -8,8 +8,8 @@ with open("range.txt", "r") as fichier_range:
         range = fichier_range.read()
 
 # Import flop file.  Must be in PIO format with weights.
-with open("KQJT.txt", "r") as fichier_range:
-        flops_file = fichier_range.read()
+with open("KQJT.txt", "r") as fichier_flop:
+        flops_file = fichier_flop.read()
 
 
 # Function to decompose range as combo + freq of the combo in the range.
@@ -19,10 +19,11 @@ def decompose_range(range):
 
 
 # Function to decompose flop cards and remove suits.
-def decompose_flops(range):
+def decompose_flops():
     flop_decompose = flops_file.split(sep="\n")
     flop_decompose = [flops[0] + flops[2] + flops[4] for flops in flop_decompose]
-    return flop_decompose
+    flop_set = set(flop_decompose)
+    return flop_set
 
 # Decomposition of range as combo + freq of the combo in the range.
 liste_range = decompose_range(range)
@@ -31,7 +32,7 @@ liste_range = decompose_range(range)
 print(liste_range)"""
 
 # Decomposition of flop cards without suit.
-liste_flops = decompose_flops(range)
+liste_flops = decompose_flops()
 
 """Verification of flop decomposition
 print(liste_flops)"""
@@ -40,24 +41,26 @@ print(liste_flops)"""
 # Balance frequencies for suited and offsuit combos.
 def liste_finale(liste_range):
     liste_finale = list()
-    compteur = 0
     for i, combos in enumerate(liste_range):
         if len(combos) == 2 and combos[0] != combos[1]:
             liste_finale.append(liste_range[i] + "o:1")
             liste_finale.append(liste_range[i] + "s:1")
-            compteur += 1
         elif len(combos) == 2 and combos[0] == combos[1]:
             liste_finale.append(liste_range[i] + "p:1")
         elif len(combos) == 3:
             liste_finale.append(liste_range[i] + ":1")
+        elif combos[0] == combos[1] and combos[2] == ":":
+            add_list_range = liste_range[i]
+            add_list_range = add_list_range[:2] + "p" + add_list_range[2:]
+            liste_finale.append(add_list_range)
         else:
             liste_finale.append(liste_range[i])
     return liste_finale
 
 liste_finale = liste_finale(liste_range)
 
-"""Verification of range frequencies
-print(liste_finale)"""
+"""Verification of range frequencies"""
+print(liste_finale)
 
 # Decomposition of combos as absolute freq.
 combo_freq = dict(x.split(":") for x in liste_finale)
@@ -485,13 +488,13 @@ def count_draw(flop, hand, board):
 # Adjust the count of each draw with combos and range frequencies.
 def ponderation_combo(combo_freq):
     for combo_type, nombre_de_combo in combo_freq.items():
+        print(combo_type)
         if combo_type[2] == "p":
             combo_freq[combo_type] = nombre_de_combo * 6
-        else:
-            if combo_type[2] == "s":
-                combo_freq[combo_type] = nombre_de_combo * 4
-            else:
-                combo_freq[combo_type] = nombre_de_combo * 16
+        elif combo_type[2] == "s":
+            combo_freq[combo_type] = nombre_de_combo * 4
+        elif combo_type[2] == "o":
+            combo_freq[combo_type] = nombre_de_combo * 12
     return combo_freq
 
 liste_pondere = ponderation_combo(combo_freq)
@@ -506,7 +509,7 @@ PONDERATION = {"straight": 10, "oesd": 5, "one_card_oesd": 3, "paired_oesd": 3, 
 
 
 # Final result of connections of the range on a given flop.
-def analyse_hands(combo_freq, flop, ponderation):
+def analyse_hands(liste_pondere, flop, ponderation):
     connexion = dict()
     compte_final2 = dict()
     compte_final = {"straight": 0, "oesd": 0, "one_card_oesd": 0, "paired_oesd": 0, "gs": 0, "one_card_gs": 0, "paired_gs": 0, "double_gs": 0}
@@ -529,7 +532,7 @@ def analyse_hands(combo_freq, flop, ponderation):
 score_flop = dict()
 for flops in liste_flops:
     flop = flop_convert(flops)
-    score_flop[flops] = analyse_hands(combo_freq, flop, PONDERATION)
+    score_flop[flops] = analyse_hands(liste_pondere, flop, PONDERATION)
 
 # pprint.pprint(score_flop, width=1)
 
