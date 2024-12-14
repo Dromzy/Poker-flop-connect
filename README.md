@@ -1,6 +1,8 @@
 ## What it does?
 This script analyze a poker hand range against any flops subset by calculating connectivity.
+
 It calculates a connection score for each flop based on the number of draws created with all the hands of the subset.
+
 Each hand can only form a single draw at a time with this system of priority.
 ```
         ("straight", lambda: is_straight(board)),
@@ -13,8 +15,8 @@ Each hand can only form a single draw at a time with this system of priority.
         ("gs", lambda: is_gs(flop, hand))
 ```
 
-The priority is determined by the score of the draw in ponderation and mutual exclusions
-(paired_oesd is a subset of one_card_oesd which is a subsetof oesd)
+**The priority is determined by the score of the draw in ponderation and mutual exclusions
+(paired_oesd is a subset of one_card_oesd which is a subsetof oesd)**
 
 ## Usage
 
