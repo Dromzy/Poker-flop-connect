@@ -37,4 +37,4 @@ python .\tests.py
 <!-- CONTACT -->
 ## Contact
 
-Kevin Goillot - [htt](https://rangor.poker/) - kevin_goillot@hotmail.com
+Kevin Goillot - [Rangor Poker](https://rangor.poker/) - kevin_goillot@hotmail.com
