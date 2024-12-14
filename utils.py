@@ -24,6 +24,18 @@ def expand_combos_range(liste_range):
             range_combos_expanded.append(combos)
     return range_combos_expanded
 
+# Adjust the count of each draw with combos and range frequencies.
+def ponderation_combo(combos_freq):
+    for combo_type, nombre_de_combo in combos_freq.items():
+        print(combo_type)
+        if combo_type[2] == "p":
+            combos_freq[combo_type] = nombre_de_combo * 6
+        elif combo_type[2] == "s":
+            combos_freq[combo_type] = nombre_de_combo * 4
+        elif combo_type[2] == "o":
+            combos_freq[combo_type] = nombre_de_combo * 12
+    return combos_freq
+
 # Utility function to convert card values.
 def convert_card_value(card):
     if card == "A":
@@ -210,7 +222,6 @@ def is_paired_gs(board, flop, hand):
 
 
 # Count the number of draws.
-# Rajouter return le type direct quand il le trouve et break pour optimiser
 def count_draw(flop, hand, board):
     connexion = {"straight": 0, "oesd": 0, "one_card_oesd": 0, "paired_oesd": 0, "gs": 0, "one_card_gs": 0, "paired_gs": 0, "double_gs": 0}
 
@@ -232,16 +243,3 @@ def count_draw(flop, hand, board):
             return connexion  # Return immediately after finding the first matching draw type
 
     return connexion
-
-
-# Adjust the count of each draw with combos and range frequencies.
-def ponderation_combo(combos_freq):
-    for combo_type, nombre_de_combo in combos_freq.items():
-        print(combo_type)
-        if combo_type[2] == "p":
-            combos_freq[combo_type] = nombre_de_combo * 6
-        elif combo_type[2] == "s":
-            combos_freq[combo_type] = nombre_de_combo * 4
-        elif combo_type[2] == "o":
-            combos_freq[combo_type] = nombre_de_combo * 12
-    return combos_freq

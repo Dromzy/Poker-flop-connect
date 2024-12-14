@@ -3,98 +3,108 @@ import sys
 import pprint
 import math
 import unittest
+from collections import defaultdict
 from utils import *
 
-# Constants of importance of draws.
-# It will multiply the number of each draws with this number to better reflect
-# the impact of the draw on the equity of the range.
-# Thinking process is for exemple that you won't extract as much value when you
-# hit a one card oesd than a regular oesd.
-PONDERATION = {"straight": 10, "oesd": 5, "one_card_oesd": 3, "paired_oesd": 3, "gs": 2, "one_card_gs": 1, "paired_gs": 1, "double_gs": 10}
+# Constants for draw multipliers
+PONDERATION = {
+    "straight": 10,
+    "oesd": 5,
+    "one_card_oesd": 3,
+    "paired_oesd": 3,
+    "gs": 2,
+    "one_card_gs": 1,
+    "paired_gs": 1,
+    "double_gs": 10
+}
 
+def analyse_hands(adjusted_combos_freq, flop, ponderation):
+    """
+    Analyzes the connections of a range on a given flop.
+
+    Parameters:
+    - adjusted_combos_freq (dict): A dictionary where keys are combo types and values are their adjusted frequencies.
+    - flop (list): The current flop cards.
+    - ponderation (dict): A dictionary containing score for each draw type.
+
+    Returns:
+    - dict: A dictionary with the final scores for each draw type.
+    """
+    total_draws = defaultdict(float)
+
+    for combo_type, combo_count in adjusted_combos_freq.items():
+        # Convert combo type to a hand
+        hand = convert_hand(combo_type[0], combo_type[1])
+
+        # Generate the full board with the current hand
+        board = generate_board(flop, hand)
+
+        # Count the draws on the current board
+        draw_counts = count_draw(flop, hand, board)
+
+        # Accumulate the weighted draw counts
+        for draw_type, count in draw_counts.items():
+            total_draws[draw_type] += count * combo_count
+
+    # Apply ponderation to each draw type and round up
+    final_scores = {draw_type: math.ceil(total_draws[draw_type] * ponderation.get(draw_type, 1))
+                   for draw_type in ponderation}
+
+    return final_scores
 
 def main(range_file="range-test.txt", flop_file="flops-test.txt"):
-    # Import range file. Must be in PIO format.
-    with open(range_file, "r") as fichier_range:
-        range = fichier_range.read()
+    """
+    Main function to analyze poker hand ranges against flops and calculate connection scores.
 
-    # Import flop file. Must be in PIO format with weights.
-    with open(flop_file, "r") as fichier_flop:
-        flops_file = fichier_flop.read()
+    Parameters:
+    - range_file (str): Path to the range file in PIO format.
+    - flop_file (str): Path to the flop file in PIO format.
+    
+    Returns:
+    - list: Sorted list of flop results based on connection scores.
+    """
+    # Read range and flop files
+    with open(range_file, "r") as file_range:
+        range_data = file_range.read()
 
-    # Decomposition of range as combo + freq of the combo in the range.
-    range_combos = decompose_range(range)
+    with open(flop_file, "r") as file_flop:
+        flops_data = file_flop.read()
 
-    # Decomposition of flop cards without suit.
-    flop_decompose = flops_file.split(sep="\n")
-    flop_decompose = [flops[0] + flops[2] + flops[4] for flops in flop_decompose]
-    liste_flops = set(flop_decompose)
+    # Decompose range into combos
+    range_combos = decompose_range(range_data)
 
-    # Verification of flop decomposition
-    # print(liste_flops)
+    # Decompose flops and remove suits
+    flop_decomposed = [flop_line[0] + flop_line[2] + flop_line[4] for flop_line in flops_data.split("\n") if flop_line.strip()]
+    unique_flops = set(flop_decomposed)
 
-    range_combos_expanded = expand_combos_range(range_combos)
+    # Expand combos in PIO expanded form
+    expanded_combos = expand_combos_range(range_combos)
 
-    # Verification of range frequencies
-    # print(range_combos_expanded)
+    # Parse combo frequencies
+    combos_freq = {combo.split(":")[0]: float(combo.split(":")[1]) for combo in expanded_combos}
 
-    # Decomposition of combos as absolute freq.
-    combos_freq = dict(x.split(":") for x in range_combos_expanded)
-    for cle, valeur in combos_freq.items():
-        combos_freq[cle] = float(valeur)
+    # Apply ponderation to combos
+    adjusted_combos_freq = ponderation_combo(combos_freq)
 
-    # Verification of combos decomposition
-    # print(combos_freq)
+    # Analyze each flop
+    flop_scores = {}
+    for flop_str in unique_flops:
+        flop = convert_flop(flop_str)
+        flop_scores[flop_str] = analyse_hands(adjusted_combos_freq, flop, PONDERATION)
 
-    combos_pondere = ponderation_combo(combos_freq)
+    # Calculate final connection scores per flop
+    final_flop_scores = {}
+    for flop_str, scores in flop_scores.items():
+        total_score = sum(scores.values())
+        final_flop_scores[flop_str] = total_score
 
-    # Final result of connections of the range on a given flop.
-    def analyse_hands(combos_pondere, flop, ponderation):
-        connexion = dict()
-        compte_final2 = dict()
-        compte_final = {"straight": 0, "oesd": 0, "one_card_oesd": 0, "paired_oesd": 0, "gs": 0, "one_card_gs": 0, "paired_gs": 0, "double_gs": 0}
-        score_final = {"straight": 0.0, "oesd": 0.0, "one_card_oesd": 0.0, "paired_oesd": 0.0, "gs": 0.0, "one_card_gs": 0.0, "paired_gs": 0.0, "double_gs": 0.0}
-        for combo_type, nombre_de_combo in combos_pondere.items():
-            hand = convert_hand(combo_type[0], combo_type[1])
-            board = generate_board(flop, hand)
-            connexion = count_draw(flop, hand, board)
-            # print("hand: ", hand, "\n" "board :", board, "\n", "result", connexion)  # Verification of connectivity of combos.
-            for key, values in connexion.items():
-                compte_final2[key] = values * nombre_de_combo
-            # print("compte final 2", compte_final2)
-            compte_final = {k: v + compte_final[k] for k, v in compte_final2.items()}
-            # print("compte final", compte_final)
-        score_final = {k: math.ceil(v * ponderation[k]) for k, v in compte_final.items()}
-        # print("score final", score_final)
-        return score_final
+    # Sort flops based on their final scores
+    sorted_flops = sorted(final_flop_scores.items(), key=lambda item: item[1])
 
-    # Fonction analyse des flops
-    score_flop = dict()
-    for flops in liste_flops:
-        flop = convert_flop(flops)
-        score_flop[flops] = analyse_hands(combos_pondere, flop, PONDERATION)
-
-    # pprint.pprint(score_flop, width=1)
-
-    # Calculate the final connexion score of a flop based on number of connexion and
-    # Ponderation with the constants
-    score_flop_final = float()
-    score_flop_values = dict()
-    for k, values in score_flop.items():
-        for nombre_de_connexions in values.values():
-            score_flop_final += nombre_de_connexions
-        score_flop_values[k] = score_flop_final
-        score_flop_final = 0
-
-    # pprint.pprint(score_flop_values, width=1)
-
-    # Sort all flop results
-    resultat_tri = sorted(score_flop_values.items(), key=lambda t: t[1])  
-    pprint.pprint(resultat_tri, width=1)
-    return resultat_tri
+    pprint.pprint(sorted_flops, width=1)
+    return sorted_flops
 
 if __name__ == "__main__":
     range_file = sys.argv[1] if len(sys.argv) > 1 else "range-test.txt"
     flop_file = sys.argv[2] if len(sys.argv) > 2 else "flops-test.txt"
     main(range_file, flop_file)
-
