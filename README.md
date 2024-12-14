@@ -33,3 +33,8 @@ python .\connexion_flop.py "range.txt" "flops.txt"
 ```python
 python .\tests.py    
 ```
+
+<!-- CONTACT -->
+## Contact
+
+Kevin Goillot - [htt](https://rangor.poker/) - kevin_goillot@hotmail.com
