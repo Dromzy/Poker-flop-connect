@@ -27,7 +27,6 @@ def expand_combos_range(liste_range):
 # Adjust the count of each draw with combos and range frequencies.
 def ponderation_combo(combos_freq):
     for combo_type, nombre_de_combo in combos_freq.items():
-        print(combo_type)
         if combo_type[2] == "p":
             combos_freq[combo_type] = nombre_de_combo * 6
         elif combo_type[2] == "s":
@@ -125,10 +124,11 @@ def is_paired_oesd(board, flop, hand):
     if is_one_card_oesd(flop, hand) or is_paired_flop(flop) or is_straight(board) or is_wrong_oesd_A_high(board):
         return False
 
-    unique_board = sorted(set(board), reverse=True)
-    gaps = [unique_board[i] - unique_board[i + 1] for i in range(len(unique_board) - 1)]
-    if gaps.count(1) == 3:
-        return True
+    if is_paired_board(flop,hand):
+        unique_board = sorted(set(board), reverse=True)
+        gaps = [unique_board[i] - unique_board[i + 1] for i in range(len(unique_board) - 1)]
+        if gaps.count(1) == 3:
+            return True
 
     return False
 
@@ -227,12 +227,12 @@ def count_draw(flop, hand, board):
 
     draw_checks = [
         ("straight", lambda: is_straight(board)),
-        ("double_gs", lambda: is_double_gs(flop, hand)),
-        ("paired_gs", lambda: is_paired_gs(board, flop, hand)),
         ("paired_oesd", lambda: is_paired_oesd(board, flop, hand)),
-        ("one_card_gs", lambda: is_one_card_gs(flop, hand)),
         ("one_card_oesd", lambda: is_one_card_oesd(flop, hand)),
         ("oesd", lambda: is_just_oesd(board, flop, hand)),
+        ("double_gs", lambda: is_double_gs(flop, hand)),
+        ("paired_gs", lambda: is_paired_gs(board, flop, hand)),
+        ("one_card_gs", lambda: is_one_card_gs(flop, hand)),
         ("gs", lambda: is_gs(flop, hand))
     ]
 
