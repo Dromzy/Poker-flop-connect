@@ -94,7 +94,6 @@ def main(range_file="range-test.txt", flop_file="flops-test.txt"):
 
     # Calculate final connection scores per flop
     final_flop_scores = {}
-    print(flop_scores)
     for flop_str, scores in flop_scores.items():
         total_score = sum(scores.values())
         final_flop_scores[flop_str] = total_score
