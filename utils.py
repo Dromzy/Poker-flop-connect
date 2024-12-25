@@ -114,10 +114,13 @@ def is_just_oesd(board, flop, hand):
     if is_one_card_oesd(flop, hand) or is_paired_board(flop, hand) or is_straight(board) or is_wrong_oesd_A_high(board):
         return False
 
-    return any(
-        all(board[i + j] - board[i + j + 1] == 1 for j in range(3))
-        for i in range(len(board) - 3)
-    )
+    unique_board = sorted(set(board), reverse=True)
+
+    for i in range(len(unique_board) - 3):
+        if all(unique_board[i + j] - unique_board[i + j + 1] == 1 for j in range(3)):
+            return True
+
+    return False
 
 # Determine if the final hand is a pair + open ended straight draw with both cards of the hand.
 def is_paired_oesd(board, flop, hand):
